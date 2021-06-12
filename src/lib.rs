@@ -4,6 +4,8 @@
 pub mod error;
 pub mod structs;
 
+use std::time::{Instant, Duration};
+
 use error::APIError;
 use structs::members::Member;
 use structs::metrics::MetricsSnapshot;
@@ -128,4 +130,21 @@ impl APIWrapper {
     pub async fn fetch_member(&self, member_id: u64) -> Result<Member, APIError> {
         self.get(&format!("/members/{}", member_id)[..]).await
     }
+
+    /// Schedule a plain request and measure how long the API took to respond.
+    /// 
+    /// Note:
+    /// This duration may not be representative of the raw request latency due to the fact that requests may be stalled
+    /// locally within this wrapper to ensure compliance with rate limiting rules. Whilst this is a trade-off, it can
+    /// be argued that the returned duration will be more representative of the true latencies experienced.
+    /// 
+    /// Example:
+    /// ```
+    /// println!("Took {}ms for the API to respond.", wrapper.ping().await?.as_millis());
+    /// ```
+    pub async fn ping(&self) -> Result<Duration, APIError> {
+        let time = Instant::now();
+        self.health().await?;
+        Ok(time.elapsed())
+    } 
 }

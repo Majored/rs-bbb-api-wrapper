@@ -2,8 +2,11 @@
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
 pub mod error;
+pub mod structs;
 
 use error::APIError;
+use structs::members::Member;
+use structs::metrics::MetricsSnapshot;
 
 use reqwest::{Response, Client, ClientBuilder, StatusCode};
 use reqwest::header::HeaderMap;
@@ -111,10 +114,18 @@ impl APIWrapper {
     pub async fn health(&self) -> Result<(), APIError> {
         let data: String = self.get("/health").await?;
 
-        if data == "ok" {
-            Ok(())
-        } else {
-            Err(APIError::from_raw("HealthEndpointError".to_string(), format!("{} != \"ok\"", data)))
+        if data != "ok" {
+            return Err(APIError::from_raw("HealthEndpointError".to_string(), format!("{} != \"ok\"", data)));
         }
+
+        Ok(())
+    }
+
+    pub async fn fetch_metrics(&self) -> Result<MetricsSnapshot, APIError> {
+        self.get("/metrics").await
+    }
+
+    pub async fn fetch_member(&self, member_id: u64) -> Result<Member, APIError> {
+        self.get(&format!("/members/{}", member_id)[..]).await
     }
 }

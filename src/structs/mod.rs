@@ -3,3 +3,4 @@
 
 pub mod members;
 pub mod metrics;
+pub mod resources;

@@ -6,7 +6,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct APIError {
     code: String,
-    message: String
+    message: String,
 }
 
 impl APIError {

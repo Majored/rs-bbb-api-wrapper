@@ -1,12 +1,14 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-pub mod throttler;
 pub mod error;
 pub mod structs;
+pub mod throttler;
 
 use error::APIError;
 use std::time::{Duration, Instant};
+use structs::alerts::Alert;
+use structs::conversations::Conversation;
 use structs::members::Member;
 use structs::metrics::MetricsSnapshot;
 use structs::resources::Resource;
@@ -17,7 +19,7 @@ use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
 use log::debug;
-use std::sync::atomic::{Ordering};
+use std::sync::atomic::Ordering;
 
 use throttler::RateLimitStore;
 
@@ -92,7 +94,10 @@ impl APIWrapper {
             .build()
             .unwrap();
 
-        let wrapper = APIWrapper { http_client, rate_limit_store: RateLimitStore::new() };
+        let wrapper = APIWrapper {
+            http_client,
+            rate_limit_store: RateLimitStore::new(),
+        };
         wrapper.health().await?;
 
         Ok(wrapper)
@@ -103,11 +108,11 @@ impl APIWrapper {
             // We loop in case another request was scheduled at the same time which could cause contention with this
             // request, and so that the relevant values in the RateLimitStore are updated after stalling.
             let stall_for = throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ);
-        
+
             if stall_for == 0 {
                 break;
             }
-            
+
             debug!("Stalling request for {}ms to stay within rate limit.", stall_for);
             tokio::time::sleep(Duration::from_millis(stall_for)).await;
         }
@@ -227,6 +232,41 @@ impl APIWrapper {
     /// ```
     pub async fn fetch_member(&self, member_id: u64) -> Result<Member, APIError> {
         self.get(format!("{}/members/{}", BASE_URL, member_id)).await
+    }
+
+    /// Fetch detailed information about yourself.
+    ///
+    /// # Note
+    /// The Member structure contains three Option fields. However, when fetching information about yourself, only the
+    /// `gender` field may be None if you've selected your gender as 'unspecified'.
+    ///
+    /// # Example
+    /// ```
+    /// let member = wrapper.fetch_self().await?;
+    /// assert!(!member.banned());
+    /// ```
+    pub async fn fetch_self(&self) -> Result<Member, APIError> {
+        self.get(format!("{}/members/self", BASE_URL)).await
+    }
+
+    /// Fetch a list of unread alerts.
+    ///
+    /// # Example
+    /// ```
+    /// let tagged_in = wrapper.fetch_alerts().await?.iter().filter(|alert| alert.alert_type() == "tag");
+    /// ```
+    pub async fn fetch_alerts(&self) -> Result<Vec<Alert>, APIError> {
+        self.get(format!("{}/alerts", BASE_URL)).await
+    }
+
+    /// Fetch a list of unread conversations.
+    ///
+    /// # Example
+    /// ```
+    /// let open_unread = wrapper.fetch_conversations().await?.iter().filter(|conversation| conversation.open());
+    /// ```
+    pub async fn fetch_conversations(&self) -> Result<Vec<Conversation>, APIError> {
+        self.get(format!("{}/conversations", BASE_URL)).await
     }
 
     /// Construct a Resource and fetch detailed information about it.

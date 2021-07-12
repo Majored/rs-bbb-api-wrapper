@@ -1,6 +1,7 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
+pub mod throttler;
 pub mod error;
 pub mod structs;
 
@@ -15,7 +16,12 @@ use reqwest::{Client, ClientBuilder, Response, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
-pub const BASE_URL: &str = "http://127.0.0.1/v1";
+use log::debug;
+use std::sync::atomic::{Ordering};
+
+use throttler::RateLimitStore;
+
+pub const BASE_URL: &str = "https://api.mc-market.org/v1";
 
 pub enum APIToken {
     Private(String),
@@ -57,7 +63,8 @@ impl<D> APIResponse<D> {
 }
 
 pub struct APIWrapper {
-    http_client: Client,
+    pub(crate) http_client: Client,
+    pub(crate) rate_limit_store: RateLimitStore,
 }
 
 impl APIWrapper {
@@ -78,7 +85,6 @@ impl APIWrapper {
     pub async fn build(token: APIToken) -> Result<APIWrapper, APIError> {
         let mut default_headers = HeaderMap::new();
         default_headers.insert("Authorization", token.as_header().parse().unwrap());
-        default_headers.insert("CF-Connecting-IP", "10.10.0.1".parse().unwrap());
 
         let http_client = ClientBuilder::new()
             .https_only(false)
@@ -86,13 +92,23 @@ impl APIWrapper {
             .build()
             .unwrap();
 
-        let wrapper = APIWrapper { http_client };
+        let wrapper = APIWrapper { http_client, rate_limit_store: RateLimitStore::default() };
         wrapper.health().await?;
 
         Ok(wrapper)
     }
 
     async fn get<D: DeserializeOwned>(&self, endpoint: String) -> Result<D, APIError> {
+        let stall_for = throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ);
+        
+        if stall_for > 0 {
+            debug!("Throttling request for {} second(s) to stay within rate limit.", stall_for);
+            tokio::time::sleep(Duration::from_secs(stall_for)).await;
+        }
+
+        self.rate_limit_store.read_burst_count.fetch_add(1, Ordering::AcqRel);
+        self.rate_limit_store.read_normal_count.fetch_add(1, Ordering::AcqRel);
+
         let response = match self.http_client.get(endpoint).send().await {
             Ok(response) => response,
             Err(error) => {

@@ -92,18 +92,24 @@ impl APIWrapper {
             .build()
             .unwrap();
 
-        let wrapper = APIWrapper { http_client, rate_limit_store: RateLimitStore::default() };
+        let wrapper = APIWrapper { http_client, rate_limit_store: RateLimitStore::new() };
         wrapper.health().await?;
 
         Ok(wrapper)
     }
 
     async fn get<D: DeserializeOwned>(&self, endpoint: String) -> Result<D, APIError> {
-        let stall_for = throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ);
+        loop {
+            // We loop in case another request was scheduled at the same time which could cause contention with this
+            // request, and so that the relevant values in the RateLimitStore are updated after stalling.
+            let stall_for = throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ);
         
-        if stall_for > 0 {
-            debug!("Throttling request for {} second(s) to stay within rate limit.", stall_for);
-            tokio::time::sleep(Duration::from_secs(stall_for)).await;
+            if stall_for == 0 {
+                break;
+            }
+            
+            debug!("Stalling request for {}ms to stay within rate limit.", stall_for);
+            tokio::time::sleep(Duration::from_millis(stall_for)).await;
         }
 
         self.rate_limit_store.read_burst_count.fetch_add(1, Ordering::AcqRel);

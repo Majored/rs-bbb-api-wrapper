@@ -3,11 +3,11 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::convert::TryInto;
 
 // Rate limits are not currently disclosed - default to 0 for the moment.
-const READ_BURST_LIMIT: u8 = 0;
-const READ_NORMAL_LIMIT: u8 = 0;
+const READ_BURST_LIMIT: u8 = 100;
+const READ_NORMAL_LIMIT: u8 = 100;
 
-const WRITE_BURST_LIMIT: u8 = 0;
-const WRITE_NORMAL_LIMIT: u8 = 0;
+const WRITE_BURST_LIMIT: u8 = 100;
+const WRITE_NORMAL_LIMIT: u8 = 100;
 
 pub enum RequestType { READ, WRITE }
 

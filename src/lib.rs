@@ -105,32 +105,44 @@ impl APIWrapper {
 
     async fn get<D: DeserializeOwned>(&self, endpoint: String) -> Result<D, APIError> {
         loop {
-            // We loop in case another request was scheduled at the same time which could cause contention with this
-            // request, and so that the relevant values in the RateLimitStore are updated after stalling.
-            let stall_for = throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ);
-
-            if stall_for == 0 {
-                break;
+            loop {
+                // We loop in case another request was scheduled at the same time which could cause contention with this
+                // request.
+                let stall_for = throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ);
+    
+                if stall_for == 0 {
+                    break;
+                }
+    
+                debug!("Stalling request for {}ms to stay within rate limit.", stall_for);
+                tokio::time::sleep(Duration::from_millis(stall_for)).await;
             }
 
-            debug!("Stalling request for {}ms to stay within rate limit.", stall_for);
-            tokio::time::sleep(Duration::from_millis(stall_for)).await;
+            let response = match self.http_client.get(&endpoint).send().await {
+                Ok(response) => response,
+                Err(error) => {
+                    return Err(APIError::from_raw(
+                        "HttpClientError".to_string(),
+                        format!("Unable to parse successful response: {}", error),
+                    ));
+                }
+            };
+
+            match response.status() {
+                StatusCode::TOO_MANY_REQUESTS => {
+                    let retry: u64 = response.headers().get("Retry-After").unwrap().to_str().unwrap().parse().unwrap();
+
+                    self.rate_limit_store.read_last_retry.store(retry, Ordering::Release);
+                    self.rate_limit_store.read_last_request.store(throttler::unix_timestamp(), Ordering::Release);
+                },
+                _ => {
+                    self.rate_limit_store.read_last_retry.store(0, Ordering::Release);
+                    self.rate_limit_store.read_last_request.store(throttler::unix_timestamp(), Ordering::Release);
+
+                    return APIWrapper::handle_response(response).await;
+                },
+            };
         }
-
-        self.rate_limit_store.read_burst_count.fetch_add(1, Ordering::AcqRel);
-        self.rate_limit_store.read_normal_count.fetch_add(1, Ordering::AcqRel);
-
-        let response = match self.http_client.get(endpoint).send().await {
-            Ok(response) => response,
-            Err(error) => {
-                return Err(APIError::from_raw(
-                    "HttpClientError".to_string(),
-                    format!("Unable to parse successful response: {}", error),
-                ));
-            }
-        };
-
-        APIWrapper::handle_response(response).await
     }
 
     async fn handle_response<D: DeserializeOwned>(response: Response) -> Result<D, APIError> {

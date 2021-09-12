@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-use crate::error::APIError;
+use crate::error::Result;
 use crate::APIWrapper;
 use serde::Deserialize;
 
@@ -60,13 +60,13 @@ impl<'a> Resource<'a> {
     /// 
     /// assert_eq!(resource.data_unchecked().resource_id(), 16682);
     /// ```
-    pub async fn from_raw_fetch_data(wrapper: &'a APIWrapper, identifier: u64) -> Result<Resource<'a>, APIError> {
+    pub async fn from_raw_fetch_data(wrapper: &'a APIWrapper, identifier: u64) -> Result<Resource<'a>> {
         let mut resource = Resource::from_raw(wrapper, identifier);
         resource.fetch_data().await?;
         Ok(resource)
     }
 
-    pub async fn fetch_data(&mut self) -> Result<(), APIError> {
+    pub async fn fetch_data(&mut self) -> Result<()> {
         self.data = Some(self.wrapper.get(format!("{}/resources/{}", crate::BASE_URL, self.identifier)).await?);
         Ok(())
     }
@@ -83,27 +83,27 @@ impl<'a> Resource<'a> {
         self.data.as_ref().unwrap()
     }
 
-    pub async fn list_reviews(&self) -> Result<Vec<Review>, APIError> {
+    pub async fn list_reviews(&self) -> Result<Vec<Review>> {
         self.wrapper.get(format!("{}/resources/{}/reviews", crate::BASE_URL, self.identifier)).await
     }
 
-    pub async fn list_downloads(&self) -> Result<Vec<Download>, APIError> {
+    pub async fn list_downloads(&self) -> Result<Vec<Download>> {
         self.wrapper.get(format!("{}/resources/{}/downloads", crate::BASE_URL, self.identifier)).await
     }
 
-    pub async fn list_licenses(&self) -> Result<Vec<License>, APIError> {
+    pub async fn list_licenses(&self) -> Result<Vec<License>> {
         self.wrapper.get(format!("{}/resources/{}/licenses", crate::BASE_URL, self.identifier)).await
     }
 
-    pub async fn list_purchases(&self) -> Result<Vec<Purchase>, APIError> {
+    pub async fn list_purchases(&self) -> Result<Vec<Purchase>> {
         self.wrapper.get(format!("{}/resources/{}/purchases", crate::BASE_URL, self.identifier)).await
     }
 
-    pub async fn list_versions(&self) -> Result<Vec<Version>, APIError> {
+    pub async fn list_versions(&self) -> Result<Vec<Version>> {
         self.wrapper.get(format!("{}/resources/{}/versions", crate::BASE_URL, self.identifier)).await
     }
 
-    pub async fn list_updates(&self) -> Result<Vec<Update>, APIError> {
+    pub async fn list_updates(&self) -> Result<Vec<Update>> {
         self.wrapper.get(format!("{}/resources/{}/updates", crate::BASE_URL, self.identifier)).await
     }
 }

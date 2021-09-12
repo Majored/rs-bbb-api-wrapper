@@ -3,6 +3,8 @@
 
 use serde::Deserialize;
 
+pub type Result<V> = std::result::Result<V, APIError>;
+
 #[derive(Deserialize, Debug)]
 pub struct APIError {
     code: String,

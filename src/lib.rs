@@ -5,7 +5,7 @@ pub mod error;
 pub mod structs;
 pub mod throttler;
 
-use error::APIError;
+use error::{Result, APIError};
 use structs::alerts::Alert;
 use structs::conversations::Conversation;
 use structs::members::Member;
@@ -98,7 +98,7 @@ impl APIWrapper {
     ///
     /// println!("Successfully connected to the API.");
     /// ```
-    pub async fn build(token: APIToken) -> Result<APIWrapper, APIError> {
+    pub async fn build(token: APIToken) -> Result<APIWrapper> {
         let mut default_headers = HeaderMap::new();
         default_headers.insert("Authorization", token.as_header().parse().unwrap());
 
@@ -118,7 +118,7 @@ impl APIWrapper {
     }
 
     /// A raw function which makes a GET request to a specific endpoint.
-    async fn get<D: DeserializeOwned>(&self, endpoint: String) -> Result<D, APIError> {
+    async fn get<D: DeserializeOwned>(&self, endpoint: String) -> Result<D> {
         // As we need to be able to resend the request if we hit a rate limit, we need to either:
         // - use a loop
         // - use as async recursive function
@@ -176,7 +176,7 @@ impl APIWrapper {
         }
     }
 
-    async fn handle_response<D: DeserializeOwned>(response: Response) -> Result<D, APIError> {
+    async fn handle_response<D: DeserializeOwned>(response: Response) -> Result<D> {
         let status_code = response.status();
         let response: APIResponse<D> = match response.json().await {
             Ok(response) => response,
@@ -209,7 +209,7 @@ impl APIWrapper {
     /// wrapper.health().await?;
     /// println!("Received a successful response from the API.");
     /// ```
-    pub async fn health(&self) -> Result<(), APIError> {
+    pub async fn health(&self) -> Result<()> {
         let data: String = self.get(format!("{}/health", BASE_URL)).await?;
 
         if data != "ok" {
@@ -233,7 +233,7 @@ impl APIWrapper {
     /// ```
     /// println!("Took {}ms for the API to respond.", wrapper.ping().await?.as_millis());
     /// ```
-    pub async fn ping(&self) -> Result<Duration, APIError> {
+    pub async fn ping(&self) -> Result<Duration> {
         let time = Instant::now();
         self.health().await?;
         Ok(time.elapsed())
@@ -258,7 +258,7 @@ impl APIWrapper {
     ///     connections.insert(metrics.interval().last(), metrics.get_metric("connections").unwrap());
     /// }
     /// ```
-    pub async fn fetch_metrics(&self) -> Result<MetricsSnapshot, APIError> {
+    pub async fn fetch_metrics(&self) -> Result<MetricsSnapshot> {
         self.get(format!("{}/metrics", BASE_URL)).await
     }
 
@@ -273,7 +273,7 @@ impl APIWrapper {
     /// let member = wrapper.fetch_member(87939).await?;
     /// assert_eq!("Harry", member.username());
     /// ```
-    pub async fn fetch_member(&self, member_id: u64) -> Result<Member, APIError> {
+    pub async fn fetch_member(&self, member_id: u64) -> Result<Member> {
         self.get(format!("{}/members/{}", BASE_URL, member_id)).await
     }
 
@@ -288,7 +288,7 @@ impl APIWrapper {
     /// let member = wrapper.fetch_self().await?;
     /// assert!(!member.banned());
     /// ```
-    pub async fn fetch_self(&self) -> Result<Member, APIError> {
+    pub async fn fetch_self(&self) -> Result<Member> {
         self.get(format!("{}/members/self", BASE_URL)).await
     }
 
@@ -298,7 +298,7 @@ impl APIWrapper {
     /// ```
     /// let tagged_in = wrapper.fetch_alerts().await?.iter().filter(|alert| alert.alert_type() == "tag");
     /// ```
-    pub async fn fetch_alerts(&self) -> Result<Vec<Alert>, APIError> {
+    pub async fn fetch_alerts(&self) -> Result<Vec<Alert>> {
         self.get(format!("{}/alerts", BASE_URL)).await
     }
 
@@ -308,7 +308,7 @@ impl APIWrapper {
     /// ```
     /// let open_unread = wrapper.fetch_conversations().await?.iter().filter(|conversation| conversation.open());
     /// ```
-    pub async fn fetch_conversations(&self) -> Result<Vec<Conversation>, APIError> {
+    pub async fn fetch_conversations(&self) -> Result<Vec<Conversation>> {
         self.get(format!("{}/conversations", BASE_URL)).await
     }
 
@@ -325,7 +325,7 @@ impl APIWrapper {
     /// let resource = wrapper.fetch_resource(16682).await?;
     /// assert!(resource.has_data());
     /// ```
-    pub async fn fetch_resource(&self, resource_id: u64) -> Result<Resource<'_>, APIError> {
+    pub async fn fetch_resource(&self, resource_id: u64) -> Result<Resource<'_>> {
         Resource::from_raw_fetch_data(self, resource_id).await
     }
 }

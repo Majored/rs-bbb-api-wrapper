@@ -6,32 +6,33 @@ pub mod structs;
 pub mod throttler;
 
 use error::APIError;
-use std::time::{Duration, Instant};
 use structs::alerts::Alert;
 use structs::conversations::Conversation;
 use structs::members::Member;
 use structs::metrics::MetricsSnapshot;
 use structs::resources::Resource;
+use throttler::RateLimitStore;
 
+use std::sync::atomic::Ordering;
+use std::time::{Duration, Instant};
+
+use log::debug;
 use reqwest::header::HeaderMap;
 use reqwest::{Client, ClientBuilder, Response, StatusCode};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
 
-use log::debug;
-use std::sync::atomic::Ordering;
-
-use throttler::RateLimitStore;
-
+/// The base API URL and version which will be prepended to all endpoints.
 pub const BASE_URL: &str = "https://api.mc-market.org/v1";
 
+/// An enum representing the two possible API token types.
 pub enum APIToken {
     Private(String),
     Shared(String),
 }
 
 impl APIToken {
-    pub fn as_header(&self) -> String {
+    pub(crate) fn as_header(&self) -> String {
         match self {
             APIToken::Private(value) => format!("Private {}", value),
             APIToken::Shared(value) => format!("Shared {}", value),
@@ -39,6 +40,7 @@ impl APIToken {
     }
 }
 
+/// A structure representing a parsed response from the API.
 #[derive(Deserialize)]
 pub struct APIResponse<D> {
     result: String,
@@ -47,18 +49,30 @@ pub struct APIResponse<D> {
 }
 
 impl<D> APIResponse<D> {
+    /// Returns whether or not the response was successful.
+    ///
+    /// If true, a call to get_data() will not panic.
     pub fn is_success(&self) -> bool {
         self.result == "success"
     }
 
+    /// Returns whether or not the response was errored.
+    ///
+    /// If true, a call to get_error() will not panic.
     pub fn is_error(&self) -> bool {
         self.result == "error"
     }
 
+    /// Returns the containing data within the response.
+    ///
+    /// Will panic if the response was not successful.
     pub fn get_data(self) -> D {
         self.data.unwrap()
     }
 
+    /// Returns the containing error within the response.
+    ///
+    /// Will panic if the response was successful.
     pub fn get_error(self) -> APIError {
         self.error.unwrap()
     }
@@ -103,19 +117,25 @@ impl APIWrapper {
         Ok(wrapper)
     }
 
+    /// A raw function which makes a GET request to a specific endpoint.
     async fn get<D: DeserializeOwned>(&self, endpoint: String) -> Result<D, APIError> {
+        // As we need to be able to resend the request if we hit a rate limit, we need to either:
+        // - use a loop
+        // - use as async recursive function
+        //
+        // The latter would require the addition of an indirection via a boxed future due to infinitely-sized types.
+        // This approach lacks consistency with the rest of this wrapper and is harder to maintain. We've gone with the
+        // former where the outer loop controls the request retry, and the inner loop controls the stalling retry.
+
         loop {
             loop {
-                // We loop in case another request was scheduled at the same time which could cause contention with this
-                // request.
-                let stall_for = throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ);
-    
-                if stall_for == 0 {
-                    break;
-                }
-    
-                debug!("Stalling request for {}ms to stay within rate limit.", stall_for);
-                tokio::time::sleep(Duration::from_millis(stall_for)).await;
+                match throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ) {
+                    0 => break,
+                    stall_for => {
+                        debug!("Stalling request for {}ms to stay within rate limit.", stall_for);
+                        tokio::time::sleep(Duration::from_millis(stall_for)).await;
+                    }
+                };
             }
 
             let response = match self.http_client.get(&endpoint).send().await {
@@ -130,17 +150,28 @@ impl APIWrapper {
 
             match response.status() {
                 StatusCode::TOO_MANY_REQUESTS => {
-                    let retry: u64 = response.headers().get("Retry-After").unwrap().to_str().unwrap().parse().unwrap();
+                    let retry: u64 = response
+                        .headers()
+                        .get("Retry-After")
+                        .unwrap()
+                        .to_str()
+                        .unwrap()
+                        .parse()
+                        .unwrap();
 
                     self.rate_limit_store.read_last_retry.store(retry, Ordering::Release);
-                    self.rate_limit_store.read_last_request.store(throttler::unix_timestamp(), Ordering::Release);
-                },
+                    self.rate_limit_store
+                        .read_last_request
+                        .store(throttler::unix_timestamp(), Ordering::Release);
+                }
                 _ => {
                     self.rate_limit_store.read_last_retry.store(0, Ordering::Release);
-                    self.rate_limit_store.read_last_request.store(throttler::unix_timestamp(), Ordering::Release);
+                    self.rate_limit_store
+                        .read_last_request
+                        .store(throttler::unix_timestamp(), Ordering::Release);
 
                     return APIWrapper::handle_response(response).await;
-                },
+                }
             };
         }
     }

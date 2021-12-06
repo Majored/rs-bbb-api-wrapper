@@ -2,10 +2,11 @@
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
 pub mod error;
+pub(crate) mod http;
 pub mod structs;
-pub mod throttler;
+pub(crate) mod throttler;
 
-use error::{Result, APIError};
+use error::{APIError, Result};
 use structs::alerts::Alert;
 use structs::conversations::Conversation;
 use structs::members::Member;
@@ -13,14 +14,10 @@ use structs::metrics::MetricsSnapshot;
 use structs::resources::Resource;
 use throttler::RateLimitStore;
 
-use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
-use log::debug;
-use reqwest::header::HeaderMap;
-use reqwest::{Client, ClientBuilder, Response, StatusCode};
-use serde::de::DeserializeOwned;
-use serde::Deserialize;
+use reqwest::{Client, ClientBuilder, header::HeaderMap};
+use serde::{Serialize, de::DeserializeOwned};
 
 /// The base API URL and version which will be prepended to all endpoints.
 pub const BASE_URL: &str = "https://api.mc-market.org/v1";
@@ -37,44 +34,6 @@ impl APIToken {
             APIToken::Private(value) => format!("Private {}", value),
             APIToken::Shared(value) => format!("Shared {}", value),
         }
-    }
-}
-
-/// A structure representing a parsed response from the API.
-#[derive(Deserialize)]
-pub struct APIResponse<D> {
-    result: String,
-    data: Option<D>,
-    error: Option<APIError>,
-}
-
-impl<D> APIResponse<D> {
-    /// Returns whether or not the response was successful.
-    ///
-    /// If true, a call to get_data() will not panic.
-    pub fn is_success(&self) -> bool {
-        self.result == "success"
-    }
-
-    /// Returns whether or not the response was errored.
-    ///
-    /// If true, a call to get_error() will not panic.
-    pub fn is_error(&self) -> bool {
-        self.result == "error"
-    }
-
-    /// Returns the containing data within the response.
-    ///
-    /// Will panic if the response was not successful.
-    pub fn get_data(self) -> D {
-        self.data.unwrap()
-    }
-
-    /// Returns the containing error within the response.
-    ///
-    /// Will panic if the response was successful.
-    pub fn get_error(self) -> APIError {
-        self.error.unwrap()
     }
 }
 
@@ -102,104 +61,27 @@ impl APIWrapper {
         let mut default_headers = HeaderMap::new();
         default_headers.insert("Authorization", token.as_header().parse().unwrap());
 
-        let http_client = ClientBuilder::new()
-            .https_only(false)
-            .default_headers(default_headers)
-            .build()
-            .unwrap();
+        let http_client = ClientBuilder::new().https_only(false).default_headers(default_headers).build().unwrap();
 
-        let wrapper = APIWrapper {
-            http_client,
-            rate_limit_store: RateLimitStore::new(),
-        };
+        let wrapper = APIWrapper { http_client, rate_limit_store: RateLimitStore::new() };
         wrapper.health().await?;
 
         Ok(wrapper)
     }
 
     /// A raw function which makes a GET request to a specific endpoint.
-    async fn get<D: DeserializeOwned>(&self, endpoint: String) -> Result<D> {
-        // As we need to be able to resend the request if we hit a rate limit, we need to either:
-        // - use a loop
-        // - use as async recursive function
-        //
-        // The latter would require the addition of an indirection via a boxed future due to infinitely-sized types.
-        // This approach lacks consistency with the rest of this wrapper and is harder to maintain. We've gone with the
-        // former where the outer loop controls the request retry, and the inner loop controls the stalling retry.
-
-        loop {
-            loop {
-                match throttler::stall_for(&self.rate_limit_store, throttler::RequestType::READ) {
-                    0 => break,
-                    stall_for => {
-                        debug!("Stalling request for {}ms to stay within rate limit.", stall_for);
-                        tokio::time::sleep(Duration::from_millis(stall_for)).await;
-                    }
-                };
-            }
-
-            let response = match self.http_client.get(&endpoint).send().await {
-                Ok(response) => response,
-                Err(error) => {
-                    return Err(APIError::from_raw(
-                        "HttpClientError".to_string(),
-                        format!("Unable to parse successful response: {}", error),
-                    ));
-                }
-            };
-
-            match response.status() {
-                StatusCode::TOO_MANY_REQUESTS => {
-                    let retry: u64 = response
-                        .headers()
-                        .get("Retry-After")
-                        .unwrap()
-                        .to_str()
-                        .unwrap()
-                        .parse()
-                        .unwrap();
-
-                    self.rate_limit_store.read_last_retry.store(retry, Ordering::Release);
-                    self.rate_limit_store
-                        .read_last_request
-                        .store(throttler::unix_timestamp(), Ordering::Release);
-                }
-                _ => {
-                    self.rate_limit_store.read_last_retry.store(0, Ordering::Release);
-                    self.rate_limit_store
-                        .read_last_request
-                        .store(throttler::unix_timestamp(), Ordering::Release);
-
-                    return APIWrapper::handle_response(response).await;
-                }
-            };
-        }
+    async fn get<D>(&self, endpoint: &str) -> Result<D> where D: DeserializeOwned {
+        http::read(self, endpoint).await?.as_result()
     }
 
-    async fn handle_response<D: DeserializeOwned>(response: Response) -> Result<D> {
-        let status_code = response.status();
-        let response: APIResponse<D> = match response.json().await {
-            Ok(response) => response,
-            Err(error) => {
-                if status_code == StatusCode::OK {
-                    return Err(APIError::from_raw(
-                        "SuccessResponseParseError".to_string(),
-                        format!("Unable to parse successful response: {}", error),
-                    ));
-                } else {
-                    return Err(APIError::from_raw(
-                        "ErrorResponseParseError".to_string(),
-                        format!("Unable to parse error response: {}", error),
-                    ));
-                }
-            }
-        };
+    /// A raw function which makes a POST request to a specific endpoint.
+    async fn post<D, B>(&self, endpoint: &str, body: &B) -> Result<D> where D: DeserializeOwned, B: Serialize {
+        http::write(self, endpoint, body, true).await?.as_result()
+    }
 
-        if response.is_success() {
-            Ok(response.get_data())
-        } else {
-            Err(response.get_error())
-        }
+    /// A raw function which makes a PATCH request to a specific endpoint.
+    async fn patch<D, B>(&self, endpoint: &str, body: &B) -> Result<D> where D: DeserializeOwned, B: Serialize {
+        http::write(self, endpoint, body, false).await?.as_result()
     }
 
     /// Schedule a plain request which we expect to always succeed under nominal conditions.
@@ -213,10 +95,7 @@ impl APIWrapper {
         let data: String = self.get(format!("{}/health", BASE_URL)).await?;
 
         if data != "ok" {
-            return Err(APIError::from_raw(
-                "HealthEndpointError".to_string(),
-                format!("{} != \"ok\"", data),
-            ));
+            return Err(APIError::from_raw("HealthEndpointError".to_string(), format!("{} != \"ok\"", data)));
         }
 
         Ok(())

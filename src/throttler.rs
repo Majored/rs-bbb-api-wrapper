@@ -1,8 +1,11 @@
+use std::convert::TryInto;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::convert::TryInto;
 
-pub(crate) enum RequestType { READ, WRITE }
+pub(crate) enum RequestType {
+    READ,
+    WRITE,
+}
 
 /// A strucutre for storing the relevant atomic values in order to track our compliance with the API's rate limits.
 pub(crate) struct RateLimitStore {
@@ -18,15 +21,35 @@ impl RateLimitStore {
         RateLimitStore {
             read_last_retry: AtomicU64::new(0),
             read_last_request: AtomicU64::new(unix_timestamp()),
-        
+
             write_last_retry: AtomicU64::new(0),
             write_last_request: AtomicU64::new(unix_timestamp()),
         }
     }
+
+    pub fn store_read(&self, retry: u64) {
+        self.read_last_retry.store(retry, Ordering::Release);
+        self.read_last_request.store(unix_timestamp(), Ordering::Release);
+    }
+
+    pub fn store_write(&self, retry: u64) {
+        self.write_last_retry.store(retry, Ordering::Release);
+        self.write_last_request.store(unix_timestamp(), Ordering::Release);
+    }
+
+    pub fn reset_read(&self) {
+        self.read_last_retry.store(0, Ordering::Release);
+        self.read_last_request.store(unix_timestamp(), Ordering::Release);
+    }
+
+    pub fn reset_write(&self) {
+        self.write_last_retry.store(0, Ordering::Release);
+        self.write_last_request.store(unix_timestamp(), Ordering::Release);
+    }
 }
 
 /// Compute how long, if at all, we should stall the next request in order to be compliant with rate limiting.
-/// 
+///
 /// Returned value is in milliseconds. A value of 0 indiciates that there's no need to stall the calling request.
 pub(crate) fn stall_for(store: &RateLimitStore, request_type: RequestType) -> u64 {
     let time = unix_timestamp();

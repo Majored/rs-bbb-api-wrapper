@@ -13,37 +13,33 @@ pub struct Resource<'a> {
 
 impl<'a> Resource<'a> {
     /// Construct a resource from its raw parts (an immutable borrow to the wrapper and an identifier).
-    /// 
+    ///
     /// # Note
     /// This construction does not make any requests to the API, thus also doesn't validate if the resource associated
     /// with the given identifier exists or is viewable by the requesting member. You may want to use this construction
     /// when calling a child function/endpoint (such as listing reviews) without needing underlying data about the
     /// resource (thus, we avoid an additional API request).
-    /// 
+    ///
     /// # Example
     /// ```
     /// let resource = Resource::from_raw(&wrapper, 16682);
     /// let reviews = resource.list_reviews().await.unwrap();
-    /// 
+    ///
     /// assert!(reviews.len() != 0);
     /// ```
     pub fn from_raw(wrapper: &'a APIWrapper, identifier: u64) -> Resource<'a> {
-        Self {
-            wrapper,
-            identifier,
-            data: None,
-        }
+        Self { wrapper, identifier, data: None }
     }
 
     /// Construct a resource from its raw parts (an immutable borrow to the wrapper and an identifier), and fetch its
     /// underlying data.
-    /// 
+    ///
     /// # Note
     /// As this operaion is fallible, we return a Result rather than the raw Resource type. This allows any potential
     /// request error to be unwound higher up the call stack.
-    /// 
+    ///
     /// This is an alternate function for `APIWrapper::fetch_resource()`.
-    /// 
+    ///
     /// # Example
     /// ```
     /// let resource = match Resource::from_raw_fetch_data(&wrapper, 16682) {
@@ -57,7 +53,7 @@ impl<'a> Resource<'a> {
     ///         }
     ///     }
     /// };
-    /// 
+    ///
     /// assert_eq!(resource.data_unchecked().resource_id(), 16682);
     /// ```
     pub async fn from_raw_fetch_data(wrapper: &'a APIWrapper, identifier: u64) -> Result<Resource<'a>> {

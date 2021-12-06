@@ -1,7 +1,10 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-use serde::Deserialize;
+use crate::error::Result;
+use crate::APIWrapper;
+
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
 pub struct Alert {
@@ -37,4 +40,13 @@ impl Alert {
     pub fn alert_date(&self) -> u64 {
         self.alert_date
     }
+}
+
+#[derive(Serialize)]
+struct AlertReadBody {
+    read: bool,
+}
+
+pub async fn mark_as_read(wrapper: &APIWrapper) -> Result<()> {
+    wrapper.patch(format!("{}/alerts", crate::BASE_URL), &AlertReadBody { read: true }).await
 }

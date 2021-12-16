@@ -1,8 +1,16 @@
 [package]
-name = "mcm-rust-api-wrapper"
-version = "0.1.0"
-authors = ["Harry <36297990+Majored@users.noreply.github.com>"]
-edition = "2018"
+name = "mcm_api_wrapper"
+version = "1.0.0"
+authors = ["Harry [hello@majored.pw]"]
+edition = "2021"
+repository = "https://github.com/Majored/rs-mcm-api-wrapper"
+description = "A wrapper for MC-Market's Ultimate REST API."
+readme = "README.md"
+license = "MIT"
+documentation = "https://docs.rs/mcm_api_wrapper/"
+homepage = "https://github.com/Majored/rs-mcm-api-wrapper"
+keywords = ["async", "tokio", "api-wrapper", "mc-market"]
+categories = ["asynchronous", "api-bindings", "web-programming"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

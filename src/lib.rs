@@ -2,14 +2,13 @@
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
 pub mod error;
-pub mod structs;
 pub mod data;
 pub mod helpers;
 pub(crate) mod http;
 pub(crate) mod throttler;
 
 use error::{APIError, Result};
-use structs::metrics::MetricsSnapshot;
+use data::metrics::MetricsSnapshot;
 use helpers::resources::ResourceHelper;
 use throttler::RateLimitStore;
 

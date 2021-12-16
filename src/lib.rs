@@ -12,6 +12,7 @@ use error::{APIError, Result};
 use helpers::alerts::AlertsHelper;
 use helpers::resources::ResourceHelper;
 use helpers::conversations::ConversationsHelper;
+use helpers::members::MembersHelper;
 use helpers::threads::ThreadsHelper;
 use throttler::RateLimitStore;
 
@@ -175,5 +176,9 @@ impl APIWrapper {
 
     pub fn threads(&self) -> ThreadsHelper<'_> {
         ThreadsHelper { wrapper: self }
+    }
+
+    pub fn members(&self) -> MembersHelper<'_> {
+        MembersHelper { wrapper: self }
     }
 }

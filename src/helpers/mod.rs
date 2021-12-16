@@ -5,3 +5,4 @@ pub mod alerts;
 pub mod resources;
 pub mod threads;
 pub mod conversations;
+pub mod members;

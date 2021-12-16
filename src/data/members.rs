@@ -23,3 +23,26 @@ pub struct MemberData {
     feedback_neutral: u64,
     feedback_negative: u64,
 }
+
+#[derive(Getters, Debug, Clone, Serialize, Deserialize)]
+pub struct ProfilePostData {
+    profile_post_id: u64,
+    author_id: u64,
+    post_date: u64,
+    message: String,
+    like_count: u64,
+    comment_count: u64,
+}
+
+#[derive(Getters, Debug, Clone, Serialize, Deserialize)]
+pub struct BanData {
+    member_id: u64,
+    banned_by_id: u64,
+    ban_date: u64,
+    reason: String,
+}
+
+#[derive(Serialize)]
+pub(crate) struct ProfilePostEditBody<'a> {
+    pub message: &'a str,
+}

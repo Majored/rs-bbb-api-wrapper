@@ -1,7 +1,9 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-use crate::data::resources::{ResourceData, ReviewData, DownloadData, LicenseData, PurchaseData, VersionData, UpdateData};
+use crate::data::resources::{
+    DownloadData, LicenseData, PurchaseData, ResourceData, ReviewData, UpdateData, VersionData,
+};
 use crate::error::Result;
 use crate::APIWrapper;
 

@@ -1,8 +1,8 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-use serde::{Serialize, Deserialize};
 use derive_getters::Getters;
+use serde::{Deserialize, Serialize};
 
 #[derive(Getters, Debug, Clone, Serialize, Deserialize)]
 pub struct Alert {
@@ -12,7 +12,6 @@ pub struct Alert {
     alert_type: String,
     alert_date: u64,
 }
-
 
 #[derive(Serialize)]
 pub(crate) struct AlertReadBody {

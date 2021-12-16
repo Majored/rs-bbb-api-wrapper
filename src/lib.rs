@@ -1,21 +1,21 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-pub mod error;
 pub mod data;
+pub mod error;
 pub mod helpers;
 pub(crate) mod http;
 pub(crate) mod throttler;
 
-use error::{APIError, Result};
 use data::metrics::MetricsSnapshot;
+use error::{APIError, Result};
 use helpers::resources::ResourceHelper;
 use throttler::RateLimitStore;
 
 use std::time::{Duration, Instant};
 
-use reqwest::{Client, ClientBuilder, header::HeaderMap};
-use serde::{Serialize, de::DeserializeOwned};
+use reqwest::{header::HeaderMap, Client, ClientBuilder};
+use serde::{de::DeserializeOwned, Serialize};
 
 /// The base API URL and version which will be prepended to all endpoints.
 pub const BASE_URL: &str = "https://api.mc-market.org/v1";
@@ -68,22 +68,36 @@ impl APIWrapper {
     }
 
     /// A raw function which makes a GET request to a specific endpoint.
-    async fn get<D>(&self, endpoint: &str) -> Result<D> where D: DeserializeOwned {
+    async fn get<D>(&self, endpoint: &str) -> Result<D>
+    where
+        D: DeserializeOwned,
+    {
         http::get(self, endpoint).await?.as_result()
     }
 
     /// A raw function which makes a POST request to a specific endpoint.
-    async fn post<D, B>(&self, endpoint: &str, body: &B) -> Result<D> where D: DeserializeOwned, B: Serialize {
+    async fn post<D, B>(&self, endpoint: &str, body: &B) -> Result<D>
+    where
+        D: DeserializeOwned,
+        B: Serialize,
+    {
         http::post(self, endpoint, body).await?.as_result()
     }
 
     /// A raw function which makes a PATCH request to a specific endpoint.
-    async fn patch<D, B>(&self, endpoint: &str, body: &B) -> Result<D> where D: DeserializeOwned, B: Serialize {
+    async fn patch<D, B>(&self, endpoint: &str, body: &B) -> Result<D>
+    where
+        D: DeserializeOwned,
+        B: Serialize,
+    {
         http::patch(self, endpoint, body).await?.as_result()
     }
 
     /// A raw function which makes a DELETE request to a specific endpoint.
-    async fn delete<D>(&self, endpoint: &str) -> Result<D> where D: DeserializeOwned {
+    async fn delete<D>(&self, endpoint: &str) -> Result<D>
+    where
+        D: DeserializeOwned,
+    {
         http::delete(self, endpoint).await?.as_result()
     }
 

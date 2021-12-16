@@ -74,7 +74,10 @@ impl<D> APIResponse<D> {
     }
 }
 
-pub async fn get<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse<D>> where D: DeserializeOwned {
+pub async fn get<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse<D>>
+where
+    D: DeserializeOwned,
+{
     loop {
         loop {
             match crate::throttler::stall_for(&wrapper.rate_limit_store, RequestType::READ) {
@@ -133,7 +136,10 @@ where
     }
 }
 
-pub async fn delete<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse<D>> where D: DeserializeOwned {
+pub async fn delete<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse<D>>
+where
+    D: DeserializeOwned,
+{
     loop {
         loop {
             match crate::throttler::stall_for(&wrapper.rate_limit_store, RequestType::WRITE) {

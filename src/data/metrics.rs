@@ -3,8 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use serde::{Serialize, Deserialize};
 use derive_getters::Getters;
+use serde::{Deserialize, Serialize};
 
 #[derive(Getters, Debug, Clone, Serialize, Deserialize)]
 pub struct MetricsSnapshot {

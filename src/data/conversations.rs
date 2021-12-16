@@ -27,12 +27,12 @@ pub struct ReplyData {
 
 #[derive(Serialize)]
 pub(crate) struct ConversationStartBody<'a> {
-    pub(crate) title: &'a str,
-    pub(crate) message: &'a str,
-    pub(crate) recipient_ids: &'a [u64],
+    pub title: &'a str,
+    pub message: &'a str,
+    pub recipient_ids: &'a [u64],
 }
 
 #[derive(Serialize)]
 pub(crate) struct ConversationReplyBody<'a> {
-    pub(crate) message: &'a str,
+    pub message: &'a str,
 }

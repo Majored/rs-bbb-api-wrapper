@@ -15,5 +15,5 @@ pub struct Alert {
 
 #[derive(Serialize)]
 pub(crate) struct AlertReadBody {
-    pub(crate) read: bool,
+    pub read: bool,
 }

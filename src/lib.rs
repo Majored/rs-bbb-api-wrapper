@@ -2,16 +2,15 @@
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
 pub mod error;
-pub(crate) mod http;
 pub mod structs;
+pub mod data;
+pub mod helpers;
+pub(crate) mod http;
 pub(crate) mod throttler;
 
 use error::{APIError, Result};
-use structs::alerts::Alert;
-use structs::conversations::Conversation;
-use structs::members::Member;
 use structs::metrics::MetricsSnapshot;
-use structs::resources::Resource;
+use helpers::resources::ResourceHelper;
 use throttler::RateLimitStore;
 
 use std::time::{Duration, Instant};
@@ -43,12 +42,12 @@ pub struct APIWrapper {
 }
 
 impl APIWrapper {
-    /// Build an API wrapper instance from a raw API token.
+    /// Construct a new API wrapper instance.
     ///
     /// # Note
-    /// During the build process, we make a request to the `health` endpoint which we expect to always succeed under
-    /// nominal conditions. If the request does fail, we expect subsequent requests to other endpoint to also fail so
-    /// we conclude that a build failure has occured.
+    /// During the construction process, we make a request to the `health` endpoint which we expect to always succeed
+    /// under nominal conditions. If the request does fail, we expect subsequent requests to other endpoint to also
+    /// fail so we conclude that a build failure has occured.
     ///
     /// # Example
     /// ```
@@ -57,7 +56,7 @@ impl APIWrapper {
     ///
     /// println!("Successfully connected to the API.");
     /// ```
-    pub async fn build(token: APIToken) -> Result<APIWrapper> {
+    pub async fn new(token: APIToken) -> Result<APIWrapper> {
         let mut default_headers = HeaderMap::new();
         default_headers.insert("Authorization", token.as_header().parse().unwrap());
 
@@ -71,17 +70,22 @@ impl APIWrapper {
 
     /// A raw function which makes a GET request to a specific endpoint.
     async fn get<D>(&self, endpoint: &str) -> Result<D> where D: DeserializeOwned {
-        http::read(self, endpoint).await?.as_result()
+        http::get(self, endpoint).await?.as_result()
     }
 
     /// A raw function which makes a POST request to a specific endpoint.
     async fn post<D, B>(&self, endpoint: &str, body: &B) -> Result<D> where D: DeserializeOwned, B: Serialize {
-        http::write(self, endpoint, body, true).await?.as_result()
+        http::post(self, endpoint, body).await?.as_result()
     }
 
     /// A raw function which makes a PATCH request to a specific endpoint.
     async fn patch<D, B>(&self, endpoint: &str, body: &B) -> Result<D> where D: DeserializeOwned, B: Serialize {
-        http::write(self, endpoint, body, false).await?.as_result()
+        http::patch(self, endpoint, body).await?.as_result()
+    }
+
+    /// A raw function which makes a DELETE request to a specific endpoint.
+    async fn delete<D>(&self, endpoint: &str) -> Result<D> where D: DeserializeOwned {
+        http::delete(self, endpoint).await?.as_result()
     }
 
     /// Schedule a plain request which we expect to always succeed under nominal conditions.
@@ -141,70 +145,7 @@ impl APIWrapper {
         self.get(format!("{}/metrics", BASE_URL)).await
     }
 
-    /// Fetch detailed information about a member.
-    ///
-    /// # Note
-    /// The Member structure contains three Option fields. The values of these may be None if the member has chosen to
-    /// hide these fields from public view, or if they've disabled their account.
-    ///
-    /// # Example
-    /// ```
-    /// let member = wrapper.fetch_member(87939).await?;
-    /// assert_eq!("Harry", member.username());
-    /// ```
-    pub async fn fetch_member(&self, member_id: u64) -> Result<Member> {
-        self.get(format!("{}/members/{}", BASE_URL, member_id)).await
-    }
-
-    /// Fetch detailed information about yourself.
-    ///
-    /// # Note
-    /// The Member structure contains three Option fields. However, when fetching information about yourself, only the
-    /// `gender` field may be None if you've selected your gender as 'unspecified'.
-    ///
-    /// # Example
-    /// ```
-    /// let member = wrapper.fetch_self().await?;
-    /// assert!(!member.banned());
-    /// ```
-    pub async fn fetch_self(&self) -> Result<Member> {
-        self.get(format!("{}/members/self", BASE_URL)).await
-    }
-
-    /// Fetch a list of unread alerts.
-    ///
-    /// # Example
-    /// ```
-    /// let tagged_in = wrapper.fetch_alerts().await?.iter().filter(|alert| alert.alert_type() == "tag");
-    /// ```
-    pub async fn fetch_alerts(&self) -> Result<Vec<Alert>> {
-        self.get(format!("{}/alerts", BASE_URL)).await
-    }
-
-    /// Fetch a list of unread conversations.
-    ///
-    /// # Example
-    /// ```
-    /// let open_unread = wrapper.fetch_conversations().await?.iter().filter(|conversation| conversation.open());
-    /// ```
-    pub async fn fetch_conversations(&self) -> Result<Vec<Conversation>> {
-        self.get(format!("{}/conversations", BASE_URL)).await
-    }
-
-    /// Construct a Resource and fetch detailed information about it.
-    ///
-    /// # Note
-    /// This is a helper function and is equivalent to:
-    /// ```
-    /// Resource::from_raw_fetch_data(wrapper, identifier)
-    /// ```
-    ///
-    /// # Example
-    /// ```
-    /// let resource = wrapper.fetch_resource(16682).await?;
-    /// assert!(resource.has_data());
-    /// ```
-    pub async fn fetch_resource(&self, resource_id: u64) -> Result<Resource<'_>> {
-        Resource::from_raw_fetch_data(self, resource_id).await
+    pub fn resources(&self) -> ResourceHelper<'_> {
+        ResourceHelper { wrapper: self }
     }
 }

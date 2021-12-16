@@ -19,7 +19,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::time::Duration;
 
 /// A structure representing a parsed response from the API.
-#[derive(Hash, Clone, Debug, PartialEq, Deserialize)]
+#[derive(Deserialize)]
 pub struct APIResponse<D> {
     pub result: String,
     pub data: Option<D>,
@@ -74,7 +74,7 @@ impl<D> APIResponse<D> {
     }
 }
 
-pub async fn read<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse<D>> where D: DeserializeOwned {
+pub async fn get<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse<D>> where D: DeserializeOwned {
     loop {
         loop {
             match crate::throttler::stall_for(&wrapper.rate_limit_store, RequestType::READ) {
@@ -91,7 +91,7 @@ pub async fn read<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse
     }
 }
 
-pub async fn write<D, B>(wrapper: &APIWrapper, endpoint: &str, body: &B, post: bool) -> Result<APIResponse<D>>
+pub async fn post<D, B>(wrapper: &APIWrapper, endpoint: &str, body: &B) -> Result<APIResponse<D>>
 where
     D: DeserializeOwned,
     B: Serialize,
@@ -104,11 +104,45 @@ where
             };
         }
 
-        let response = if post {
-            wrapper.http_client.post(endpoint).json(body).send().await?
-        } else {
-            wrapper.http_client.patch(endpoint).json(body).send().await?
-        };
+        let response = wrapper.http_client.post(endpoint).json(body).send().await?;
+
+        if !did_hit_limit(&wrapper.rate_limit_store, &response, RequestType::WRITE) {
+            return response.json().await?;
+        }
+    }
+}
+
+pub async fn patch<D, B>(wrapper: &APIWrapper, endpoint: &str, body: &B) -> Result<APIResponse<D>>
+where
+    D: DeserializeOwned,
+    B: Serialize,
+{
+    loop {
+        loop {
+            match crate::throttler::stall_for(&wrapper.rate_limit_store, RequestType::WRITE) {
+                0 => break,
+                stall_for => tokio::time::sleep(Duration::from_millis(stall_for)).await,
+            };
+        }
+
+        let response = wrapper.http_client.post(endpoint).json(body).send().await?;
+
+        if !did_hit_limit(&wrapper.rate_limit_store, &response, RequestType::WRITE) {
+            return response.json().await?;
+        }
+    }
+}
+
+pub async fn delete<D>(wrapper: &APIWrapper, endpoint: &str) -> Result<APIResponse<D>> where D: DeserializeOwned {
+    loop {
+        loop {
+            match crate::throttler::stall_for(&wrapper.rate_limit_store, RequestType::WRITE) {
+                0 => break,
+                stall_for => tokio::time::sleep(Duration::from_millis(stall_for)).await,
+            };
+        }
+
+        let response = wrapper.http_client.delete(endpoint).send().await?;
 
         if !did_hit_limit(&wrapper.rate_limit_store, &response, RequestType::WRITE) {
             return response.json().await?;

@@ -2,13 +2,13 @@ use std::convert::TryInto;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub(crate) enum RequestType {
+pub enum RequestType {
     READ,
     WRITE,
 }
 
 /// A strucutre for storing the relevant atomic values in order to track our compliance with the API's rate limits.
-pub(crate) struct RateLimitStore {
+pub struct RateLimitStore {
     pub(crate) read_last_retry: AtomicU64,
     pub(crate) read_last_request: AtomicU64,
 
@@ -51,7 +51,7 @@ impl RateLimitStore {
 /// Compute how long, if at all, we should stall the next request in order to be compliant with rate limiting.
 ///
 /// Returned value is in milliseconds. A value of 0 indiciates that there's no need to stall the calling request.
-pub(crate) fn stall_for(store: &RateLimitStore, request_type: RequestType) -> u64 {
+pub fn stall_for(store: &RateLimitStore, request_type: RequestType) -> u64 {
     let time = unix_timestamp();
     let mut stall_for = 0;
 
@@ -79,6 +79,6 @@ fn stall_for_helper(a_last_retry: &AtomicU64, a_last_request: &AtomicU64, time: 
 }
 
 /// Return the current time as a UNIX millisecond timestamp.
-pub(crate) fn unix_timestamp() -> u64 {
+pub fn unix_timestamp() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis().try_into().unwrap()
 }

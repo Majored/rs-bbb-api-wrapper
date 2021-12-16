@@ -11,6 +11,6 @@ pub struct AlertsHelper<'a> {
 
 impl<'a> AlertsHelper<'a> {
     pub async fn mark_as_read(&self) -> Result<()> {
-        self.wrapper.patch(format!("{}/alerts", crate::BASE_URL), &AlertReadBody { read: true }).await
+        self.wrapper.patch(&format!("{}/alerts", crate::BASE_URL), &AlertReadBody { read: true }).await
     }
 }

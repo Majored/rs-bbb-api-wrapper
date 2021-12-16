@@ -89,7 +89,7 @@ where
         let response = wrapper.http_client.get(endpoint).send().await?;
 
         if !did_hit_limit(&wrapper.rate_limit_store, &response, RequestType::READ) {
-            return response.json().await?;
+            return Ok(response.json().await?);
         }
     }
 }
@@ -110,7 +110,7 @@ where
         let response = wrapper.http_client.post(endpoint).json(body).send().await?;
 
         if !did_hit_limit(&wrapper.rate_limit_store, &response, RequestType::WRITE) {
-            return response.json().await?;
+            return Ok(response.json().await?);
         }
     }
 }
@@ -131,7 +131,7 @@ where
         let response = wrapper.http_client.post(endpoint).json(body).send().await?;
 
         if !did_hit_limit(&wrapper.rate_limit_store, &response, RequestType::WRITE) {
-            return response.json().await?;
+            return Ok(response.json().await?);
         }
     }
 }

@@ -9,7 +9,10 @@ pub(crate) mod throttler;
 
 use data::metrics::MetricsSnapshot;
 use error::{APIError, Result};
+use helpers::alerts::AlertsHelper;
 use helpers::resources::ResourceHelper;
+use helpers::conversations::ConversationsHelper;
+use helpers::threads::ThreadsHelper;
 use throttler::RateLimitStore;
 
 use std::time::{Duration, Instant};
@@ -59,7 +62,7 @@ impl APIWrapper {
         let mut default_headers = HeaderMap::new();
         default_headers.insert("Authorization", token.as_header().parse().unwrap());
 
-        let http_client = ClientBuilder::new().https_only(false).default_headers(default_headers).build().unwrap();
+        let http_client = ClientBuilder::new().https_only(true).default_headers(default_headers).build().unwrap();
 
         let wrapper = APIWrapper { http_client, rate_limit_store: RateLimitStore::new() };
         wrapper.health().await?;
@@ -109,7 +112,7 @@ impl APIWrapper {
     /// println!("Received a successful response from the API.");
     /// ```
     pub async fn health(&self) -> Result<()> {
-        let data: String = self.get(format!("{}/health", BASE_URL)).await?;
+        let data: String = self.get(&format!("{}/health", BASE_URL)).await?;
 
         if data != "ok" {
             return Err(APIError::from_raw("HealthEndpointError".to_string(), format!("{} != \"ok\"", data)));
@@ -155,10 +158,22 @@ impl APIWrapper {
     /// }
     /// ```
     pub async fn fetch_metrics(&self) -> Result<MetricsSnapshot> {
-        self.get(format!("{}/metrics", BASE_URL)).await
+        self.get(&format!("{}/metrics", BASE_URL)).await
     }
 
     pub fn resources(&self) -> ResourceHelper<'_> {
         ResourceHelper { wrapper: self }
+    }
+
+    pub fn alerts(&self) -> AlertsHelper<'_> {
+        AlertsHelper { wrapper: self }
+    }
+
+    pub fn conversations(&self) -> ConversationsHelper<'_> {
+        ConversationsHelper { wrapper: self }
+    }
+
+    pub fn threads(&self) -> ThreadsHelper<'_> {
+        ThreadsHelper { wrapper: self }
     }
 }

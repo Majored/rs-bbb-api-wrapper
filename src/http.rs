@@ -32,11 +32,6 @@ impl<D> APIResponse<D> {
         self.result == "success"
     }
 
-    /// Returns whether or not the response was errored.
-    pub fn is_error(&self) -> bool {
-        self.result == "error"
-    }
-
     /// Returns the containing data within the response.
     ///
     /// Will panic if the response was not successful.
@@ -44,25 +39,11 @@ impl<D> APIResponse<D> {
         self.data.expect("no data present")
     }
 
-    /// Returns the containing data within the response.
-    ///
-    /// Will panic if the response was not successful.
-    pub fn data_ref(&self) -> &D {
-        self.data.as_ref().expect("no data present")
-    }
-
     /// Returns the containing error within the response.
     ///
     /// Will panic if the response was successful.
     pub fn error(self) -> APIError {
         self.error.expect("no error present")
-    }
-
-    /// Returns the containing error within the response.
-    ///
-    /// Will panic if the response was successful.
-    pub fn error_ref(&self) -> &APIError {
-        self.error.as_ref().expect("no error present")
     }
 
     pub fn as_result(self) -> Result<D> {

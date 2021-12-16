@@ -1,6 +1,8 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
+use crate::error::Result;
+use crate::data::threads::{BasicThreadData, ThreadData, ReplyData, ReplyBody};
 use crate::APIWrapper;
 
 pub struct ThreadsHelper<'a> {
@@ -8,5 +10,19 @@ pub struct ThreadsHelper<'a> {
 }
 
 impl<'a> ThreadsHelper<'a> {
+    pub async fn list_threads(&self) -> Result<Vec<BasicThreadData>> {
+        self.wrapper.get(&format!("{}/threads", crate::BASE_URL)).await
+    }
 
+    pub async fn fetch_thread(&self, thread_id: u64) -> Result<ThreadData> {
+        self.wrapper.get(&format!("{}/threads/{}", crate::BASE_URL, thread_id)).await
+    }
+
+    pub async fn list_replies(&self, thread_id: u64) -> Result<Vec<ReplyData>> {
+        self.wrapper.get(&format!("{}/threads/{}/replies", crate::BASE_URL, thread_id)).await
+    }
+
+    pub async fn reply(&self, thread_id: u64, message: &str) -> Result<u64> {
+        self.wrapper.post(&format!("{}/threads/{}/replies", crate::BASE_URL, thread_id), &ReplyBody { message }).await
+    }
 }

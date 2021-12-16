@@ -35,3 +35,8 @@ pub struct ReplyData {
     message: String,
     like_count: u64,
 }
+
+#[derive(Serialize)]
+pub(crate) struct ReplyBody<'a> {
+    pub message: &'a str,
+}

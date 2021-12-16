@@ -5,7 +5,7 @@ use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 
 #[derive(Getters, Debug, Clone, Serialize, Deserialize)]
-pub struct Alert {
+pub struct AlertData {
     caused_member_id: u64,
     content_type: String,
     content_id: u64,

@@ -4,6 +4,7 @@
 pub mod data;
 pub mod error;
 pub mod helpers;
+pub mod sort;
 pub(crate) mod http;
 pub(crate) mod throttler;
 
@@ -15,6 +16,7 @@ use helpers::conversations::ConversationsHelper;
 use helpers::members::MembersHelper;
 use helpers::threads::ThreadsHelper;
 use throttler::RateLimitStore;
+use sort::SortOptions;
 
 use std::time::{Duration, Instant};
 
@@ -72,10 +74,11 @@ impl APIWrapper {
     }
 
     /// A raw function which makes a GET request to a specific endpoint.
-    async fn get<D>(&self, endpoint: &str) -> Result<D>
+    async fn get<D>(&self, endpoint: &str, sort: Option<&SortOptions<'_>>) -> Result<D>
     where
         D: DeserializeOwned,
     {
+        // TODO: Handle sort options.
         http::get(self, endpoint).await?.as_result()
     }
 
@@ -113,7 +116,7 @@ impl APIWrapper {
     /// println!("Received a successful response from the API.");
     /// ```
     pub async fn health(&self) -> Result<()> {
-        let data: String = self.get(&format!("{}/health", BASE_URL)).await?;
+        let data: String = self.get(&format!("{}/health", BASE_URL), None).await?;
 
         if data != "ok" {
             return Err(APIError::from_raw("HealthEndpointError".to_string(), format!("{} != \"ok\"", data)));
@@ -158,8 +161,8 @@ impl APIWrapper {
     ///     connections.insert(metrics.interval().last(), metrics.get_metric("connections").unwrap());
     /// }
     /// ```
-    pub async fn fetch_metrics(&self) -> Result<MetricsSnapshot> {
-        self.get(&format!("{}/metrics", BASE_URL)).await
+    pub async fn fetch_metrics(&self, sort: Option<&SortOptions<'_>>) -> Result<MetricsSnapshot> {
+        self.get(&format!("{}/metrics", BASE_URL), sort).await
     }
 
     pub fn resources(&self) -> ResourceHelper<'_> {

@@ -2,6 +2,7 @@
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
 use crate::data::alerts::{AlertData, AlertReadBody};
+use crate::sort::SortOptions;
 use crate::error::Result;
 use crate::APIWrapper;
 
@@ -10,8 +11,8 @@ pub struct AlertsHelper<'a> {
 }
 
 impl<'a> AlertsHelper<'a> {
-    pub async fn list_unread(&self) -> Result<Vec<AlertData>> {
-        self.wrapper.get(&format!("{}/alerts", crate::BASE_URL)).await
+    pub async fn list_unread(&self, sort: Option<&SortOptions<'_>>) -> Result<Vec<AlertData>> {
+        self.wrapper.get(&format!("{}/alerts", crate::BASE_URL), sort).await
     }
 
     pub async fn mark_as_read(&self) -> Result<()> {

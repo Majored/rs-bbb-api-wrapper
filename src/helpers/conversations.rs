@@ -3,6 +3,7 @@
 
 use crate::error::Result;
 use crate::data::conversations::{ConversationData, ReplyData, ConversationStartBody, ConversationReplyBody};
+use crate::sort::SortOptions;
 use crate::APIWrapper;
 
 pub struct ConversationsHelper<'a> {
@@ -10,12 +11,12 @@ pub struct ConversationsHelper<'a> {
 }
 
 impl<'a> ConversationsHelper<'a> {
-    pub async fn list_unread(&self) -> Result<Vec<ConversationData>> {
-        self.wrapper.get(&format!("{}/conversations", crate::BASE_URL)).await
+    pub async fn list_unread(&self, sort: Option<&SortOptions<'_>>) -> Result<Vec<ConversationData>> {
+        self.wrapper.get(&format!("{}/conversations", crate::BASE_URL), sort).await
     }
 
-    pub async fn list_replies(&self, conversation_id: u64) -> Result<Vec<ReplyData>> {
-        self.wrapper.get(&format!("{}/conversations/{}/replies", crate::BASE_URL, conversation_id)).await
+    pub async fn list_replies(&self, conversation_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<ReplyData>> {
+        self.wrapper.get(&format!("{}/conversations/{}/replies", crate::BASE_URL, conversation_id), sort).await
     }
 
     pub async fn start(&self, title: &str, message: &str, recipient_ids: &[u64]) -> Result<u64> {

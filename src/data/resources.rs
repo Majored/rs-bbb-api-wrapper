@@ -36,7 +36,7 @@ pub struct ResourceData {
 
 #[derive(Getters, Debug, Clone, Serialize, Deserialize)]
 pub struct DownloadData {
-    resource_id: u64,
+    download_id: u64,
     version_id: u64,
     downloader_id: u64,
     download_date: u64,
@@ -45,12 +45,8 @@ pub struct DownloadData {
 #[derive(Getters, Debug, Clone, Serialize, Deserialize)]
 pub struct ReviewData {
     review_id: u64,
-    resource_id: u64,
-    version_id: u64,
-    version_name: String,
     reviewer_id: u64,
     review_date: u64,
-    deleted: Option<bool>,
     rating: u8,
     message: String,
     author_response: String,
@@ -61,9 +57,8 @@ pub struct UpdateData {
     update_id: u64,
     title: String,
     message: String,
-    deleted: Option<bool>,
     update_date: u64,
-    likes: u64,
+    like_count: u64,
 }
 
 #[derive(Getters, Debug, Clone, Serialize, Deserialize)]
@@ -71,7 +66,6 @@ pub struct VersionData {
     version_id: u64,
     update_id: u64,
     name: String,
-    deleted: Option<bool>,
     release_date: u64,
     download_count: u64,
 }

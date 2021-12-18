@@ -2,7 +2,7 @@
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
 use crate::data::resources::{
-    DownloadData, LicenseData, PurchaseData, ResourceData, ReviewData, UpdateData, VersionData,
+    DownloadData, LicenseData, PurchaseData, BasicResourceData, ResourceData, ReviewData, UpdateData, VersionData,
 };
 use crate::error::Result;
 use crate::sort::SortOptions;
@@ -15,6 +15,10 @@ pub struct ResourceHelper<'a> {
 impl<'a> ResourceHelper<'a> {
     pub async fn fetch(&self, resource_id: u64) -> Result<ResourceData> {
         self.wrapper.get(&format!("{}/resources/{}", crate::BASE_URL, resource_id), None).await
+    }
+
+    pub async fn list(&self, sort: Option<&SortOptions<'_>>) -> Result<Vec<BasicResourceData>> {
+        self.wrapper.get(&format!("{}/resources", crate::BASE_URL), sort).await
     }
 
     pub async fn list_reviews(&self, resource_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<ReviewData>> {

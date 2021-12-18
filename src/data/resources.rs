@@ -5,6 +5,16 @@ use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 
 #[derive(Getters, Debug, Clone, Serialize, Deserialize)]
+pub struct BasicResourceData {
+    resource_id: u64,
+    author_id: u64,
+    title: String,
+    tag_line: String,
+    price: f64,
+    currency: String,
+}
+
+#[derive(Getters, Debug, Clone, Serialize, Deserialize)]
 pub struct ResourceData {
     resource_id: u64,
     author_id: u64,
@@ -13,14 +23,12 @@ pub struct ResourceData {
     description: String,
     release_date: u64,
     last_update_date: u64,
-    deleted: bool,
-    moderated: bool,
-    category_id: u64,
     category_title: String,
     current_version_id: u64,
     discussion_thread_id: u64,
     price: f64,
     currency: String,
+    purchase_count: u64,
     download_count: u64,
     review_count: u64,
     review_average: f64,

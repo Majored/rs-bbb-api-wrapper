@@ -78,8 +78,12 @@ impl APIWrapper {
     where
         D: DeserializeOwned,
     {
-        // TODO: Handle sort options.
-        http::get(self, endpoint).await?.as_result()
+        if sort.is_some() {
+            let endpoint = format!("{}?{}", endpoint, &sort.unwrap().to_query_string()?);
+            http::get(self, &endpoint).await?.as_result()
+        } else {
+            http::get(self, endpoint).await?.as_result()
+        }
     }
 
     /// A raw function which makes a POST request to a specific endpoint.

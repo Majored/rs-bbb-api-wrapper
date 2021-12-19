@@ -1,7 +1,7 @@
 # mcm_api_wrapper
 [![GitHub license](https://img.shields.io/badge/license-MIT-007ec6)](https://github.com/Majored/rs-mcm-api-wrapper/blob/main/LICENSE)
-[![Crates.io](https://img.shields.io/crates/v/async_zip)](https://crates.io/crates/mcm_api_wrapper)
-[![docs.rs](https://img.shields.io/docsrs/async_zip)](https://docs.rs/mcm_api_wrapper/)
+[![Crates.io](https://img.shields.io/crates/v/mcm_api_wrapper)](https://crates.io/crates/mcm_api_wrapper)
+[![docs.rs](https://img.shields.io/docsrs/mcm_api_wrapper)](https://docs.rs/mcm_api_wrapper/)
 
 An asynchronous Rust wrapper for MC-Market's [HTTP API](https://www.mc-market.org/wiki/ultimate-api/).
 
@@ -31,6 +31,6 @@ assert_eq!("Harry", member.username());
 ```
 
 ## Issues & Support
-Whether you're wanting to report a bug you've come across during use of this wrapper or are seeking general help/assistance, please utilise the [issues tracker](https://github.com/Majored/mcm-rust-api-wrapper/issues) and tag your issue appropriately during creation.
+Whether you're wanting to report a bug you've come across during use of this wrapper or are seeking general help/assistance, please utilise the [issues tracker](https://github.com/Majored/rs-mcm-api-wrapper/issues) and tag your issue appropriately during creation.
 
 I try to respond to issues within a reasonable timeframe.

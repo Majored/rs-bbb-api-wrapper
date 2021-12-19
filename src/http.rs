@@ -1,13 +1,15 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-//! As we need to be able to resend the request if we hit a rate limit, we need to either:
-//! - use a loop
-//! - use as async recursive function
-//!
-//! The latter would require the addition of an indirection via a boxed future due to infinitely-sized types. This
-//! approach lacks consistency with the rest of this wrapper and is harder to maintain. We've gone with the former
-//! where the outer loop controls the request retry, and the inner loop controls the stalling retry.
+//! Holds key types and methods for handling raw HTTP requests to the API.
+
+// As we need to be able to resend the request if we hit a rate limit, we need to either:
+// - use a loop
+// - use as async recursive function
+//
+// The latter would require the addition of an indirection via a boxed future due to infinitely-sized types. This
+// approach lacks consistency with the rest of this wrapper and is harder to maintain. We've gone with the former
+// where the outer loop controls the request retry, and the inner loop controls the stalling retry.
 
 use crate::error::APIError;
 use crate::error::Result;

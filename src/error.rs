@@ -1,6 +1,8 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
+//! Holds relevant error reporting types and conversions.
+
 use serde::Deserialize;
 
 pub type Result<V> = std::result::Result<V, APIError>;

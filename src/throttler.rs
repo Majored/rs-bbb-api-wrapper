@@ -1,3 +1,8 @@
+// Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
+// MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
+
+//! Holds key types for tracking our compliance with the API's rate limits.
+
 use std::convert::TryInto;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -9,11 +14,11 @@ pub enum RequestType {
 
 /// A strucutre for storing the relevant atomic values in order to track our compliance with the API's rate limits.
 pub struct RateLimitStore {
-    pub(crate) read_last_retry: AtomicU64,
-    pub(crate) read_last_request: AtomicU64,
+    pub read_last_retry: AtomicU64,
+    pub read_last_request: AtomicU64,
 
-    pub(crate) write_last_retry: AtomicU64,
-    pub(crate) write_last_request: AtomicU64,
+    pub write_last_retry: AtomicU64,
+    pub write_last_request: AtomicU64,
 }
 
 impl RateLimitStore {

@@ -1,6 +1,8 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
+//! Represents the sorting options made available by the API.
+
 use crate::error::Result;
 
 use serde::Serialize;

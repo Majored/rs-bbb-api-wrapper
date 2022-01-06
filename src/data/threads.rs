@@ -33,7 +33,6 @@ pub struct ReplyData {
     author_id: u64,
     post_date: u64,
     message: String,
-    like_count: u64,
 }
 
 #[derive(Serialize)]

@@ -10,8 +10,6 @@ pub struct MemberData {
     username: String,
     join_date: u64,
     last_activity_date: Option<u64>,
-    gender: Option<String>,
-    timezone: Option<String>,
     banned: bool,
     suspended: bool,
     restricted: bool,
@@ -30,7 +28,6 @@ pub struct ProfilePostData {
     author_id: u64,
     post_date: u64,
     message: String,
-    like_count: u64,
     comment_count: u64,
 }
 
@@ -45,4 +42,11 @@ pub struct BanData {
 #[derive(Serialize)]
 pub(crate) struct ProfilePostEditBody<'a> {
     pub message: &'a str,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct ModifySelfBody<'a> {
+    pub custom_title: Option<&'a str>,
+    pub about_me: Option<&'a str>,
+    pub signature: Option<&'a str>,
 }

@@ -2,7 +2,7 @@
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
 use crate::error::Result;
-use crate::data::members::{MemberData, ProfilePostData, ProfilePostEditBody, BanData};
+use crate::data::members::{MemberData, ProfilePostData, ProfilePostEditBody, ModifySelfBody, BanData};
 use crate::APIWrapper;
 use crate::sort::SortOptions;
 
@@ -15,12 +15,16 @@ impl<'a> MembersHelper<'a> {
         self.wrapper.get(&format!("{}/members/self", crate::BASE_URL), None).await
     }
 
+    pub async fn modify_self(&self, fields: &ModifySelfBody<'_>) -> Result<MemberData> {
+        self.wrapper.patch(&format!("{}/members/self", crate::BASE_URL), fields).await
+    }
+
     pub async fn fetch_by_id(&self, member_id: u64) -> Result<MemberData> {
         self.wrapper.get(&format!("{}/members/{}", crate::BASE_URL, member_id), None).await
     }
 
     pub async fn fetch_by_name(&self, member_name: &str) -> Result<MemberData> {
-        self.wrapper.get(&format!("{}/members/username/{}", crate::BASE_URL, member_name), None).await
+        self.wrapper.get(&format!("{}/members/usernames/{}", crate::BASE_URL, member_name), None).await
     }
 
     pub async fn list_recent_bans(&self) -> Result<BanData> {

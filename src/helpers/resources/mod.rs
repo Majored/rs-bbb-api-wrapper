@@ -1,47 +1,74 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
 
-use crate::data::resources::{
-    DownloadData, LicenseData, PurchaseData, BasicResourceData, ResourceData, ReviewData, UpdateData, VersionData,
-};
+pub mod downloads;
+pub mod licenses;
+pub mod purchases;
+pub mod reviews;
+pub mod updates;
+pub mod versions;
+
 use crate::error::Result;
 use crate::sort::SortOptions;
 use crate::APIWrapper;
+
+use crate::data::resources::BasicResourceData;
+use crate::data::resources::ResourceData;
+use crate::data::resources::ResourceModifyData;
+
+use downloads::DownloadHelper;
+use licenses::LicenseHelper;
+use purchases::PurchaseHelper;
+use reviews::ReviewHelper;
+use updates::UpdateHelper;
+use versions::VersionHelper;
 
 pub struct ResourceHelper<'a> {
     pub(crate) wrapper: &'a APIWrapper,
 }
 
 impl<'a> ResourceHelper<'a> {
-    pub async fn fetch(&self, resource_id: u64) -> Result<ResourceData> {
-        self.wrapper.get(&format!("{}/resources/{}", crate::BASE_URL, resource_id), None).await
-    }
-
     pub async fn list(&self, sort: Option<&SortOptions<'_>>) -> Result<Vec<BasicResourceData>> {
         self.wrapper.get(&format!("{}/resources", crate::BASE_URL), sort).await
     }
 
-    pub async fn list_reviews(&self, resource_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<ReviewData>> {
-        self.wrapper.get(&format!("{}/resources/{}/reviews", crate::BASE_URL, resource_id), sort).await
+    pub async fn list_owned(&self, sort: Option<&SortOptions<'_>>) -> Result<Vec<BasicResourceData>> {
+        self.wrapper.get(&format!("{}/resources/owned", crate::BASE_URL), sort).await
     }
 
-    pub async fn list_downloads(&self, resource_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<DownloadData>> {
-        self.wrapper.get(&format!("{}/resources/{}/downloads", crate::BASE_URL, resource_id), sort).await
+    pub async fn list_collaborated(&self, sort: Option<&SortOptions<'_>>) -> Result<Vec<BasicResourceData>> {
+        self.wrapper.get(&format!("{}/resources/collaborated", crate::BASE_URL), sort).await
     }
 
-    pub async fn list_licenses(&self, resource_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<LicenseData>> {
-        self.wrapper.get(&format!("{}/resources/{}/licenses", crate::BASE_URL, resource_id), sort).await
+    pub async fn fetch(&self, resource_id: u64) -> Result<ResourceData> {
+        self.wrapper.get(&format!("{}/resources/{}", crate::BASE_URL, resource_id), None).await
     }
 
-    pub async fn list_purchases(&self, resource_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<PurchaseData>> {
-        self.wrapper.get(&format!("{}/resources/{}/purchases", crate::BASE_URL, resource_id), sort).await
+    pub async fn modify(&self, resource_id: u64, fields: &ResourceModifyData<'_>) -> Result<ResourceData> {
+        self.wrapper.patch(&format!("{}/resources/{}", crate::BASE_URL, resource_id), fields).await
     }
 
-    pub async fn list_versions(&self, resource_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<VersionData>> {
-        self.wrapper.get(&format!("{}/resources/{}/versions", crate::BASE_URL, resource_id), sort).await
+    pub fn downloads(&self) -> DownloadHelper<'_> {
+        DownloadHelper { wrapper: self.wrapper }
+    }
+    
+    pub fn licenses(&self) -> LicenseHelper<'_> {
+        LicenseHelper { wrapper: self.wrapper }
     }
 
-    pub async fn list_updates(&self, resource_id: u64, sort: Option<&SortOptions<'_>>) -> Result<Vec<UpdateData>> {
-        self.wrapper.get(&format!("{}/resources/{}/updates", crate::BASE_URL, resource_id), sort).await
+    pub fn purchases(&self) -> PurchaseHelper<'_> {
+        PurchaseHelper { wrapper: self.wrapper }
+    }
+
+    pub fn reviews(&self) -> ReviewHelper<'_> {
+        ReviewHelper { wrapper: self.wrapper }
+    }
+
+    pub fn updates(&self) -> UpdateHelper<'_> {
+        UpdateHelper { wrapper: self.wrapper }
+    }
+
+    pub fn versions(&self) -> VersionHelper<'_> {
+        VersionHelper { wrapper: self.wrapper }
     }
 }

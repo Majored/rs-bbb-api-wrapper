@@ -13,7 +13,7 @@ An asynchronous Rust wrapper for MC-Market's [HTTP API](https://www.mc-market.or
 
 ```toml
 [dependencies]
-mcm_api_wrapper = "1.0.0"
+mcm_api_wrapper = "1.0.1"
 ```
 
 An extensive list of [examples](https://github.com/Majored/rs-mcm-api-wrapper/tree/main/examples) can be found under the `/examples` directory.
@@ -22,7 +22,7 @@ An extensive list of [examples](https://github.com/Majored/rs-mcm-api-wrapper/tr
 use mcm_rust_api_wrapper::{APIWrapper, APIToken};
 ...
 
-let token = APIToken::Private(String::from("y6xWrGkAzh8Gp4qBWFMG7tDyB+zB+Lub"));
+let token = APIToken::Private(String::from("Find @ https://www.mc-market.org/account/api"));
     
 let wrapper = APIWrapper::new(token).await.unwrap();
 let member = wrapper.members().fetch(87939).await.unwrap();

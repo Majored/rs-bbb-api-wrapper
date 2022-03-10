@@ -1,6 +1,6 @@
 [package]
 name = "mcm_api_wrapper"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["Harry [hello@majored.pw]"]
 edition = "2021"
 repository = "https://github.com/Majored/rs-mcm-api-wrapper"

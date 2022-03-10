@@ -93,21 +93,6 @@ pub struct PurchaseData {
 }
 
 #[derive(Debug, Default, Serialize)]
-pub struct LicenseIssuePermData {
-    pub purchaser_id: u64,
-    pub permanent: bool,
-    pub active: bool,
-}
-
-#[derive(Debug, Default, Serialize)]
-pub struct LicenseIssueTempData {
-    pub purchaser_id: u64,
-    pub permanent: bool,
-    pub start_date: u64,
-    pub end_date: u64,
-}
-
-#[derive(Debug, Default, Serialize)]
 pub struct LicenseModifyPermData {
     pub permanent: bool,
     pub active: bool,

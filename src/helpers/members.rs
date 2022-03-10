@@ -27,6 +27,10 @@ impl<'a> MembersHelper<'a> {
         self.wrapper.get(&format!("{}/members/usernames/{}", crate::BASE_URL, member_name), None).await
     }
 
+    pub async fn fetch_by_discord(&self, discord_id: u64) -> Result<MemberData> {
+        self.wrapper.get(&format!("{}/members/discords/{}", crate::BASE_URL, discord_id), None).await
+    }
+
     pub async fn list_recent_bans(&self) -> Result<BanData> {
         self.wrapper.get(&format!("{}/members/bans", crate::BASE_URL), None).await
     }

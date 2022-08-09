@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
 // MIT License (https://github.com/Majored/rs-bbb-api-wrapper/blob/main/LICENSE)
 
-//! # mcm_api_wrapper
+//! # bbb_api_wrapper
 //!
 //! An asynchronous Rust wrapper for BuiltByBit's [HTTP API](https://builtbybit.com/wiki/ultimate-api/).
 //!

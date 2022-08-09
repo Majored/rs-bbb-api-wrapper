@@ -1,16 +1,16 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
-// MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
+// MIT License (https://github.com/Majored/rs-bbb-api-wrapper/blob/main/LICENSE)
 
 //! # mcm_api_wrapper
 //!
-//! An asynchronous Rust wrapper for MC-Market's [HTTP API](https://www.mc-market.org/wiki/ultimate-api/).
+//! An asynchronous Rust wrapper for BuiltByBit's [HTTP API](https://builtbybit.com/wiki/ultimate-api/).
 //!
 //! ## Features
 //! - Built on reqwest/hyper - a fast and correct HTTP implementation.
 //! - Full coverage of the API with a fully asynchronous design using the tokio runtime.
 //! - Requests are queued and may be dynamically delayed to stay within rate limiting rules.
 //!
-//! [Read more.](https://github.com/Majored/rs-mcm-api-wrapper)
+//! [Read more.](https://github.com/Majored/rs-bbb-api-wrapper)
 
 pub mod data;
 pub mod error;
@@ -35,7 +35,7 @@ use reqwest::{header::HeaderMap, Client, ClientBuilder};
 use serde::{de::DeserializeOwned, Serialize, Deserialize};
 
 /// The base API URL and version which will be prepended to all endpoints.
-pub(crate) const BASE_URL: &str = "https://api.mc-market.org/v1";
+pub(crate) const BASE_URL: &str = "https://api.builtbybit.com/v1";
 
 /// An enum representing the two possible API token types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -54,7 +54,7 @@ impl APIToken {
     }
 }
 
-/// The primary wrapping type for interactions with MC-Market's API.
+/// The primary wrapping type for interactions with BuiltByBit's API.
 pub struct APIWrapper {
     pub(crate) http_client: Client,
     pub(crate) rate_limit_store: RateLimitStore,

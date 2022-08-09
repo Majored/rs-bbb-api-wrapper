@@ -1,5 +1,5 @@
 // Copyright (c) 2021 Harry [Majored] [hello@majored.pw]
-// MIT License (https://github.com/Majored/mcm-rust-api-wrapper/blob/main/LICENSE)
+// MIT License (https://github.com/Majored/rs-bbb-api-wrapper/blob/main/LICENSE)
 
 use crate::data::alerts::{AlertData, AlertReadBody};
 use crate::sort::SortOptions;
